@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>terminal</title>
+  <style type="text/css" media="screen">
+  * { margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; font-family: courier, monospace; }
+  #terminal { background-color: black; width: 100%; height: 100%; color: #0DFF00; }
+  #terminal-wrapper { padding: 4px; }
+  #terminal-log { font-size: 1em; }
+  #terminal-input { width: 100%; }
+  #terminal-input input { border: 0; font-size: 1em; background-color: black; color: #0DFF00; width: 98%; font-family: courier, monospace;}
+  #terminal-input input:focus { outline: 0; cursor: auto;}
+  </style>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script type="text/javascript" charset="utf-8">
+    (function($) {
+      $.terminal = {
+        buildTerminal: function(elem) {
+          var terminalWrapper = $('<div/>').attr('id', 'terminal-wrapper');
+          var terminalLog = $('<div/>').attr('id', 'terminal-log');
+          var terminalInput = $('<div/>').attr('id', 'terminal-input');
+          terminalInput.append($('<span>&gt;</span><input type="text"/>'));
+          terminalWrapper.append(terminalLog).append(terminalInput);
+          $(elem).append(terminalWrapper);
+        }
+      };
+      
+      $.fn.extend({
+        terminal: function(options) {
+          options = $.extend(options, {
+            
+          });
+        }
+      })
+    })(jQuery);
+  </script>
+</head>
+<body id="terminal-demo" onload="">
+  <div id="terminal">
+    <div id="terminal-wrapper">
+      <div id="terminal-log">
+        <ol>
+          <li>Welcome to the terminal.</li>
+          <li>Type "help" for more info.</li>
+        </ol>
+      </div>
+      <div id="terminal-input">
+        <span>&gt; </span><input type="text" name="" value="" id="">
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript" charset="utf-8">
+    function buildEntry(txt) {
+      var out = $('<ol>');
+      out.append($('<li>').text(txt));
+      return out;
+    }
+    
+    var inp = $('#terminal-input input');
+    inp.bind('keyup', function(e) {
+      if (e.keyCode == 13) {
+        var val = inp.val();
+        if (val == '') val = "<br/>";
+        $('#terminal-log').append(buildEntry(val));
+        inp.val('');
+      }
+    });
+    
+    $('#terminal').terminal({foo:'bar'});
+  </script>
+</body>
+</html>
