@@ -7,69 +7,107 @@
   <style type="text/css" media="screen">
   * { margin: 0; padding: 0; }
   html, body { width: 100%; height: 100%; font-family: courier, monospace; }
-  #terminal { background-color: black; width: 100%; height: 100%; color: #0DFF00; }
-  #terminal-wrapper { padding: 4px; }
-  #terminal-log { font-size: 1em; }
-  #terminal-input { width: 100%; }
-  #terminal-input input { border: 0; font-size: 1em; background-color: black; color: #0DFF00; width: 98%; font-family: courier, monospace;}
-  #terminal-input input:focus { outline: 0; cursor: auto;}
+  #terminal { background-color: black; width: 50%; height: 50%; color: #0DFF00; }
+  .terminal-wrapper { padding: 4px; }
+  .terminal-log { font-size: 1em; }
+  .terminal-input { width: 100%; }
+  .terminal-input textarea { border: 0; font-size: 1em; background-color: black; color: #0DFF00; width: 98%; font-family: courier, monospace; height: 18px;}
+  .terminal-input input:focus { outline: 0; cursor: auto;}
   </style>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
   <script type="text/javascript" charset="utf-8">
     (function($) {
-      $.terminal = {
-        buildTerminal: function(elem) {
-          var terminalWrapper = $('<div/>').attr('id', 'terminal-wrapper');
-          var terminalLog = $('<div/>').attr('id', 'terminal-log');
-          var terminalInput = $('<div/>').attr('id', 'terminal-input');
-          terminalInput.append($('<span>&gt;</span><input type="text"/>'));
-          terminalWrapper.append(terminalLog).append(terminalInput);
-          $(elem).append(terminalWrapper);
+      $.terminal = function(options, elem) {
+        if (arguments.length) {
+          return new $.terminal.fn.init(options, elem);
         }
       };
       
+      $.terminal.fn = $.terminal.prototype = {
+        init: function(options, elem) {
+          this.element = $(elem).data('terminal', this);
+          this.options = $.extend(true, {}, options);
+          this.commands = {};
+          this.help = {};
+          this.default_help = 'Welcome to terminal. Type "help" for more info.';
+          
+          this._buildHTML();
+          this._bindEvents();
+          this.input.focus();
+          return this;
+        },
+        
+        _buildHTML: function() {
+          var terminalWrapper = $('<div/>').attr('class', 'terminal-wrapper');
+          this.terminalLog = $('<ol/>').attr('class', 'terminal-log');
+          var terminalInput = $('<div/>').attr('class', 'terminal-input');
+          var terminalPrefix = $('<span>&gt;</span>');
+          this.input = $('<textarea/>');
+          terminalInput.append(terminalPrefix);
+          terminalInput.append(this.input);
+          terminalWrapper.append(this.terminalLog).append(terminalInput);
+          this.element.append(terminalWrapper);
+          this.print(this.default_help);
+          this.register('help', function() {
+            if (arguments.length == 0) {
+              this.print('Welcome fool!');
+            } 
+          })
+        },
+        
+        _bindEvents: function() {
+          var input = this.input, self = this;
+          input.bind('keypress', function(e) {
+            if (e.which == 13) {
+              var val = input.val();
+              input.trigger('terminalsubmit', [val]);
+              self.handleInput(val);
+              input.val('');
+            }
+          });
+        },
+        
+        register: function(name, fn, help) {
+          if (!(name in this.commands))
+            this.commands[name] = fn;
+            this.help[name] = help;
+        },
+        
+        handleInput: function(cmd) {
+          cmd = $.trim(cmd);
+          var parts = cmd.split(' ');
+          var cmd = parts.shift();
+          if (!(cmd in this.commands)) {
+            this.print("Cannot find the command '" + cmd + "'");
+          } else {
+            return this.commands[cmd].apply(this, parts);
+          }
+        },
+        
+        print: function(str) {
+          var out = $('<li>').text(str);
+          this.terminalLog.append(out);
+        }
+      };
+      $.terminal.fn.init.prototype = $.terminal.fn;
+      
       $.fn.extend({
         terminal: function(options) {
-          options = $.extend(options, {
-            
-          });
+          $.terminal(options, this);
+          return this;
         }
-      })
+      });
     })(jQuery);
   </script>
 </head>
 <body id="terminal-demo" onload="">
-  <div id="terminal">
-    <div id="terminal-wrapper">
-      <div id="terminal-log">
-        <ol>
-          <li>Welcome to the terminal.</li>
-          <li>Type "help" for more info.</li>
-        </ol>
-      </div>
-      <div id="terminal-input">
-        <span>&gt; </span><input type="text" name="" value="" id="">
-      </div>
-    </div>
-  </div>
+  <div id="terminal"></div>
+  <div id="terminal2"></div>
   <script type="text/javascript" charset="utf-8">
-    function buildEntry(txt) {
-      var out = $('<ol>');
-      out.append($('<li>').text(txt));
-      return out;
-    }
-    
-    var inp = $('#terminal-input input');
-    inp.bind('keyup', function(e) {
-      if (e.keyCode == 13) {
-        var val = inp.val();
-        if (val == '') val = "<br/>";
-        $('#terminal-log').append(buildEntry(val));
-        inp.val('');
-      }
-    });
-    
-    $('#terminal').terminal({foo:'bar'});
+    $('#terminal').terminal();
+    $('#terminal').data('terminal').register('echo', function() {
+      this.print(Array.slice.call(arguments).join(' '));
+    }, 'This function returns the arguments passed to it.');
   </script>
 </body>
 </html>
