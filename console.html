@@ -106,7 +106,7 @@
   <script type="text/javascript" charset="utf-8">
     $('#terminal').terminal();
     $('#terminal').data('terminal').register('echo', function() {
-      this.print(Array.slice.call(arguments).join(' '));
+      this.print(Array.prototype.slice.call(arguments).join(' '));
     }, 'This function returns the arguments passed to it.');
   </script>
 </body>
